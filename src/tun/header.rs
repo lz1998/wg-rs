@@ -1,4 +1,4 @@
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::IpAddr;
 
 // if len == 0:
 //     keepalive  TODO
@@ -21,20 +21,7 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |                    Options                    |    Padding    |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#[repr(C)]
-#[derive(Debug)]
-pub struct Ipv4Header {
-    pub v_ih: u8,
-    pub ts: u8,
-    pub tl: u16,
-    pub id: u16,
-    pub fl_fo: u16,
-    pub ttl: u8,
-    pub protocol: u8,
-    pub cusm: u16,
-    pub src: [u8; 4],
-    pub dst: [u8; 4],
-}
+
 // ipv6
 //                      1                   2                   3
 // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -60,70 +47,45 @@ pub struct Ipv4Header {
 // |                                                               |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-#[repr(C)]
 #[derive(Debug)]
-pub struct Ipv6Header {
-    pub v_tc_fl: u32,
-    pub len: u16,
-    pub nh: u8,
-    pub hl: u8,
-    pub src: [u8; 16],
-    pub dst: [u8; 16],
-}
-
-#[derive(Debug)]
-pub enum IpHeader<'a> {
-    V4(&'a Ipv4Header),
-    V6(&'a Ipv6Header),
+pub struct IpHeader<'a> {
+    pub version: u8,
+    pub data: &'a [u8],
 }
 
 impl<'a> IpHeader<'a> {
-    pub fn from_slice(data: &'a [u8]) -> Option<IpHeader<'a>> {
+    pub fn from_slice(data: &'a [u8]) -> Option<Self> {
         if data.is_empty() {
-            // keepalive
-            return None;
+            return None; // keepalive
         }
         let version = data[0] >> 4;
-        if (version == 4 && data.len() < 20) || (version == 6 && data.len() < 40) {
+        if !((version == 4 && data.len() >= 20) || (version == 6 && data.len() >= 40)) {
             return None;
         }
-        unsafe {
-            match version {
-                // TODO: check align
-                4 => Some(Self::V4(
-                    std::mem::transmute::<&'a [u8; 20], &'a Ipv4Header>(
-                        (&data[..20]).try_into().unwrap(), //TODO: handle err
-                    ),
-                )),
-                6 => Some(Self::V6(
-                    std::mem::transmute::<&'a [u8; 40], &'a Ipv6Header>(
-                        (&data[..40]).try_into().unwrap(), //TODO: handle err
-                    ),
-                )),
-                _ => None,
-            }
-        }
+        Some(Self { version, data })
     }
 
     pub fn src_address(&self) -> IpAddr {
-        match self {
-            Self::V4(header) => Ipv4Addr::from(header.src).into(),
-            Self::V6(header) => Ipv6Addr::from(header.src).into(),
+        match self.version {
+            4 => IpAddr::from(TryInto::<[u8; 4]>::try_into(&self.data[12..16]).unwrap()),
+            6 => IpAddr::from(TryInto::<[u8; 16]>::try_into(&self.data[8..24]).unwrap()),
+            _ => unreachable!(),
         }
     }
-
     pub fn dst_address(&self) -> IpAddr {
-        match self {
-            Self::V4(header) => Ipv4Addr::from(header.dst).into(),
-            Self::V6(header) => Ipv6Addr::from(header.dst).into(),
+        match self.version {
+            4 => IpAddr::from(TryInto::<[u8; 4]>::try_into(&self.data[16..20]).unwrap()),
+            6 => IpAddr::from(TryInto::<[u8; 16]>::try_into(&self.data[24..40]).unwrap()),
+            _ => unreachable!(),
         }
     }
 
-    pub fn computed_len(&self) -> usize {
-        (match self {
-            Self::V4(header) => header.tl,
-            Self::V6(header) => header.len,
-        }) as usize
+    pub fn computed_len(&self) -> u16 {
+        match self.version {
+            4 => u16::from_be_bytes(TryInto::<[u8; 2]>::try_into(&self.data[2..4]).unwrap()),
+            6 => u16::from_be_bytes(TryInto::<[u8; 2]>::try_into(&self.data[4..6]).unwrap()) + 40,
+            _ => unreachable!(),
+        }
     }
 }
 
