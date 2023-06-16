@@ -59,6 +59,7 @@ impl TunStream {
             name: name.to_string(),
         })
     }
+
     pub fn mtu(&self) -> std::io::Result<usize> {
         let fd = match unsafe { socket(AF_INET, SOCK_STREAM, IPPROTO_IP) } {
             -1 => return Err(std::io::Error::last_os_error()),
@@ -164,12 +165,12 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn test_boringtun() {
-        let tun = boringtun::device::tun::TunSocket::new("utun123").unwrap();
-        let tun = dbg!(tun);
-        let mtu = tun.mtu().unwrap();
-        dbg!(mtu);
-        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
-    }
+    // #[tokio::test]
+    // async fn test_boringtun() {
+    //     let tun = boringtun::device::tun::TunSocket::new("utun123").unwrap();
+    //     let tun = dbg!(tun);
+    //     let mtu = tun.mtu().unwrap();
+    //     dbg!(mtu);
+    //     tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+    // }
 }

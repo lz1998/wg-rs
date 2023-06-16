@@ -10,12 +10,11 @@ async fn main() {
     println!("{addr:?}");
     let (mut tcp_read, mut tcp_write) = tcp_stream.into_split();
 
-    // tun_read.poll_read();
     tokio::select! {
-        _ = tokio::io::copy(&mut tun_read,&mut tcp_write) => {
+        _ = tokio::io::copy(&mut tun_read, &mut tcp_write) => {
 
         }
-        _ = tokio::io::copy(&mut tcp_read,&mut tun_write) => {
+        _ = tokio::io::copy(&mut tcp_read, &mut tun_write) => {
 
         }
     };
