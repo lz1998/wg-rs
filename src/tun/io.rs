@@ -52,6 +52,7 @@ impl Read for TunIo {
 
 impl Write for TunIo {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        println!("debug: {:?}", buf.to_vec());
         let n = unsafe { libc::write(self.0, buf.as_ptr() as *const _, buf.len() as _) };
         if n < 0 {
             return Err(std::io::Error::last_os_error());
