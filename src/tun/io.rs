@@ -60,10 +60,6 @@ impl Write for TunIo {
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        let ret = unsafe { libc::fsync(self.0) };
-        if ret < 0 {
-            return Err(std::io::Error::last_os_error());
-        }
         Ok(())
     }
 }
