@@ -1,6 +1,7 @@
 use std::net::Ipv4Addr;
 
 use wg_rs::device::{allowed_ip::AllowedIP, peer::PeerConfig, Device};
+
 #[tokio::main]
 async fn main() {
     let server_addr1 = std::env::var("SERVER_ADDR1").unwrap();
@@ -35,6 +36,6 @@ async fn main() {
         )
         .await;
     println!("{result:?}");
-    
+
     tokio::time::sleep(std::time::Duration::from_secs(500)).await;
 }

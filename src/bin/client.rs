@@ -1,6 +1,7 @@
 use futures_util::StreamExt;
 use tokio_util::codec::Framed;
 use wg_rs::tun::{codec::PacketCodec, stream::TunStream};
+
 #[tokio::main]
 async fn main() {
     let tun_stream = TunStream::new("utun99").unwrap();

@@ -7,6 +7,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::io::unix::AsyncFd;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
+
 #[repr(C)]
 union IfrIfru {
     ifru_addr: sockaddr,
@@ -34,11 +35,13 @@ pub struct ifreq {
     ifr_name: [c_uchar; IFNAMSIZ],
     ifr_ifru: IfrIfru,
 }
+
 #[derive(Debug)]
 pub struct TunStream {
     pub name: String,
     pub fd: AsyncFd<TunIo>,
 }
+
 impl TunStream {
     pub fn new(name: &str) -> std::io::Result<Self> {
         let io = TunIo::open()?;

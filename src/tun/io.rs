@@ -16,6 +16,7 @@ impl AsRawFd for TunIo {
         self.0
     }
 }
+
 impl TunIo {
     pub fn open() -> std::io::Result<Self> {
         static TUN: &[u8] = b"/dev/net/tun\0";
@@ -30,10 +31,12 @@ impl TunIo {
         };
         Ok(Self(fd))
     }
+
     pub fn close(&self) {
         unsafe { libc::close(self.0) };
     }
 }
+
 impl Drop for TunIo {
     fn drop(&mut self) {
         self.close()

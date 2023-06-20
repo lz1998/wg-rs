@@ -2,14 +2,13 @@ use std::sync::Arc;
 
 use crate::{
     error::WgResult,
-    tun::{codec::PacketCodec, stream::TunStream},
+    tun::{codec::PacketCodec, header::IpHeader, stream::TunStream},
 };
 
 use self::{
     allowed_ip::AllowedIP,
     peer::{Peer, PeerConfig},
 };
-use crate::tun::header::IpHeader;
 use bytes::Bytes;
 use futures_util::{stream::SplitSink, SinkExt, StreamExt};
 use ip_network::IpNetwork;
@@ -68,9 +67,11 @@ impl Device {
         }
         Ok(this)
     }
+
     pub async fn handle_incoming_packet(&self, packet: Bytes) -> WgResult<()> {
         self.tun_out.lock().await.send(packet).await
     }
+
     pub async fn handle_iface_packet(&self, packet: Bytes) -> WgResult<()> {
         let dst_addr = match IpHeader::from_slice(&packet).map(|h| h.dst_address()) {
             Some(addr) => addr,
@@ -83,6 +84,7 @@ impl Device {
         peer.lock().await.send_packet(packet).await?;
         Ok(())
     }
+
     pub async fn insert_tcp_peer(
         self: &Arc<Self>,
         stream: TcpStream,
@@ -103,6 +105,7 @@ impl Device {
         let _ = self.close_sender.send(());
     }
 }
+
 impl Drop for Device {
     fn drop(&mut self) {
         self.close();

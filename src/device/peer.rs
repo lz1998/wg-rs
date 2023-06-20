@@ -39,7 +39,7 @@ impl<S: AsyncRead + AsyncWrite + Send + 'static> Peer<S> {
                 (),
             );
         }
-        // let tcp_stream = TcpStream::connect(config.endpoint).await?;
+
         let (out_stream, mut in_stream) = Framed::new(stream, PacketCodec).split();
         let (close_sender, mut close_receiver) = tokio::sync::broadcast::channel(1);
 
@@ -69,7 +69,7 @@ impl<S: AsyncRead + AsyncWrite + Send + 'static> Peer<S> {
         })
     }
 
-    pub async fn send_packet(&mut self, packet: bytes::Bytes) -> WgResult<()> {
+    pub async fn send_packet(&mut self, packet: Bytes) -> WgResult<()> {
         // TODO encrypt
         self.out_stream.send(packet).await
     }
