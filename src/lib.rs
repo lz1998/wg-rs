@@ -1,5 +1,6 @@
 pub mod error;
 pub mod tun;
+pub mod device;
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }

@@ -21,3 +21,5 @@ futures-util = { version = "0.3", features = [
     "sink",
 ] }
 thiserror = "1"
+ip_network = "0.4"
+ip_network_table = "0.2"
