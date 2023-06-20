@@ -1,3 +1,4 @@
+pub mod error;
 pub mod tun;
 pub fn add(left: usize, right: usize) -> usize {
     left + right

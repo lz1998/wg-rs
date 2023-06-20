@@ -20,3 +20,4 @@ bytes = "1"
 futures-util = { version = "0.3", features = [
     "sink",
 ] }
+thiserror = "1"

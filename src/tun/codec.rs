@@ -1,12 +1,14 @@
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
 
+use crate::error::{WgError, WgResult};
+
 pub struct PacketCodec;
 
 impl Encoder<Bytes> for PacketCodec {
-    type Error = std::io::Error;
+    type Error = WgError;
 
-    fn encode(&mut self, item: Bytes, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Bytes, dst: &mut BytesMut) -> WgResult<()> {
         dst.put(item);
         Ok(())
     }
@@ -14,9 +16,9 @@ impl Encoder<Bytes> for PacketCodec {
 
 impl Decoder for PacketCodec {
     type Item = Bytes;
-    type Error = std::io::Error;
+    type Error = WgError;
 
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+    fn decode(&mut self, src: &mut BytesMut) -> WgResult<Option<Self::Item>> {
         if src.len() < 20 {
             return Ok(None);
         }
@@ -24,7 +26,7 @@ impl Decoder for PacketCodec {
         let len = (match version {
             4 => u16::from_be_bytes(TryInto::<[u8; 2]>::try_into(&src[2..4]).unwrap()),
             6 => u16::from_be_bytes(TryInto::<[u8; 2]>::try_into(&src[4..6]).unwrap()) + 40,
-            _ => unreachable!(), // TODO invalid packet
+            _ => return Err(WgError::InvalidPacket),
         }) as usize;
         if src.len() < len {
             return Ok(None);
