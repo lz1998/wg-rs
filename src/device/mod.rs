@@ -17,8 +17,9 @@ use tokio::{
     net::TcpStream,
     sync::{Mutex, RwLock},
 };
-use tokio_util::codec::Framed;
+use tokio_util::codec::{Framed, LinesCodec};
 pub mod allowed_ip;
+pub mod api;
 pub mod peer;
 
 pub struct DeviceConfig {
@@ -31,10 +32,12 @@ pub struct Device {
     pub tcp_router: RwLock<IpNetworkTable<Arc<Mutex<Peer<TcpStream>>>>>,
     pub close_sender: tokio::sync::broadcast::Sender<()>,
     pub tun_out: Mutex<SplitSink<Framed<TunStream, PacketCodec>, Bytes>>, // TODO remove lock, use channel
+    pub cleanup_paths: Mutex<Vec<String>>,
+    pub name: String,
 }
 impl Device {
-    pub async fn new(name: &str) -> WgResult<Arc<Self>> {
-        let tun_stream = TunStream::new(name)?;
+    pub async fn new(name: String) -> WgResult<Arc<Self>> {
+        let tun_stream = TunStream::new(&name)?;
         tun_stream.mtu()?;
         let (close_sender, mut close_receiver) = tokio::sync::broadcast::channel(1);
         let (tun_out, mut tun_in) = Framed::new(tun_stream, PacketCodec).split();
@@ -43,7 +46,11 @@ impl Device {
             tcp_router: RwLock::new(IpNetworkTable::new()),
             close_sender,
             tun_out: Mutex::new(tun_out),
+            cleanup_paths: Default::default(),
+            name,
         });
+
+        let (api_listener, api_path) = this.create_api_listener().await?;
 
         {
             // tunnel input handler
@@ -55,12 +62,25 @@ impl Device {
                             // TODO handle error
                             let _ = device.handle_iface_packet(packet).await;
                         }
+                        Ok((api_conn,_)) = api_listener.accept() => {
+                            let (mut api_writer, mut api_reader) = Framed::new(api_conn, LinesCodec::new()).split::<String>();
+                            if let Some(Ok(line)) = api_reader.next().await {
+                                let status = match line.as_str() {
+                                    "get=1" => device.api_get(&mut api_writer).await,
+                                    "set=1" => device.api_set(&mut api_reader).await,
+                                    _ => libc::EIO,
+                                };
+                                api_writer.send(format!("errno={}", status)).await.ok();
+                            }
+                        }
                         _ = close_receiver.recv() => {
+                            let _ = tokio::fs::remove_file(&api_path).await;
                             for (_,peer) in device.tcp_router.write().await.iter(){
                                 peer.lock().await.close()
                             }
                             break;
                         }
+
                     }
                 }
             });

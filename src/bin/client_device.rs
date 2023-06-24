@@ -7,7 +7,7 @@ async fn main() {
     let server_addr1 = std::env::var("SERVER_ADDR1").unwrap();
     let server_addr2 = std::env::var("SERVER_ADDR2").unwrap();
 
-    let device = Device::new("utun99").await.unwrap();
+    let device = Device::new("utun99".into()).await.unwrap();
 
     let tcp_stream = tokio::net::TcpStream::connect(server_addr1).await.unwrap();
     let result = device
