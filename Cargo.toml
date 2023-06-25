@@ -23,3 +23,19 @@ futures-util = { version = "0.3", features = [
 thiserror = "1"
 ip_network = "0.4"
 ip_network_table = "0.2"
+ring = "0.16"
+# x25519-dalek = { version = "=2.0.0-rc.3", features = [
+#     "reusable_secrets",
+#     "static_secrets",
+# ] }
+base64 = "0.21"
+rand_core = { version = "0.6.3", features = [
+    "getrandom",
+] }
+# boringtun = { git = "https://github.com/lz1998/boringtun.git", branch = "master" }
+boringtun = { path = "../boringtun/boringtun" }
+dashmap = "5.2"
+tracing = "0.1"
+socket2 = { version = "0.5", features = [
+    "all",
+] }
