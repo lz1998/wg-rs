@@ -56,10 +56,10 @@ pub struct Device {
 impl Device {
     pub async fn new(name: String) -> WgResult<Arc<Self>> {
         let tun_stream = TunStream::new(&name)?;
-        tun_stream.mtu()?;
+        let mtu = tun_stream.mtu()?;
         let (udp_close, _) = tokio::sync::broadcast::channel(1);
         let (close_sender, mut close_receiver) = tokio::sync::broadcast::channel(1);
-        let (tun_out, mut tun_in) = Framed::new(tun_stream, PacketCodec).split();
+        let (tun_out, mut tun_in) = Framed::new(tun_stream, PacketCodec { mtu }).split();
         let this = Arc::new(Self {
             close_sender,
             tun_out: Mutex::new(tun_out),
@@ -154,7 +154,6 @@ impl Device {
                 }
                 TunnResult::Err(e) => tracing::error!(message = "Timer error", error = ?e),
                 TunnResult::WriteToNetwork(packet) => {
-                    println!("outgoing 1");
                     match endpoint_addr {
                         SocketAddr::V4(_) => udp4.send_to(packet, &endpoint_addr).await.ok(),
                         SocketAddr::V6(_) => udp6.send_to(packet, &endpoint_addr).await.ok(),
@@ -172,7 +171,6 @@ impl Device {
         packet: &[u8],
         rate_limiter: &RateLimiter,
     ) -> WgResult<()> {
-        println!("incoming");
         // self.tun_out.lock().await.send(packet).await
 
         let mut dst_buf = vec![0u8; 65535];
@@ -180,7 +178,6 @@ impl Device {
         {
             Ok(packet) => packet,
             Err(TunnResult::WriteToNetwork(cookie)) => {
-                println!("outgoing 2");
                 let _: Result<_, _> = udp.send_to(cookie, &addr).await;
                 return Ok(());
             }
@@ -228,7 +225,6 @@ impl Device {
             TunnResult::Err(_) => return Ok(()),
             TunnResult::WriteToNetwork(packet) => {
                 flush = true;
-                println!("outgoing 3");
                 let _: Result<_, _> = udp.send_to(packet, &addr).await;
             }
             TunnResult::WriteToTunnelV4(packet, addr) => {
@@ -257,20 +253,15 @@ impl Device {
                 }
             }
         };
-        println!("test1");
 
         if flush {
-            println!("test2");
             // Flush pending queue
             while let TunnResult::WriteToNetwork(packet) =
                 p.tunnel.decapsulate(None, &[], &mut dst_buf[..])
             {
-                println!("test3");
-                println!("outgoing 4");
                 let _: Result<_, _> = udp.send_to(packet, &addr).await;
             }
         }
-        println!("test4");
 
         // // This packet was OK, that means we want to create a connected socket for this peer
         // let addr = addr.as_socket().unwrap();
@@ -305,7 +296,6 @@ impl Device {
             }
             TunnResult::WriteToNetwork(packet) => {
                 if let Some(addr @ SocketAddr::V4(_)) = peer.addr {
-                    println!("outgoing 5");
                     let _: Result<_, _> = self
                         .udp4
                         .write()
@@ -315,7 +305,6 @@ impl Device {
                         .send_to(packet, &addr)
                         .await;
                 } else if let Some(addr @ SocketAddr::V6(_)) = peer.addr {
-                    println!("outgoing 6");
                     let _: Result<_, _> = self
                         .udp6
                         .write()

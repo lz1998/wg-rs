@@ -23,6 +23,7 @@ impl Device {
         &self,
         _writer: &mut SplitSink<Framed<S, LinesCodec>, String>,
     ) -> i32 {
+        // TODO
         println!("api_get");
         0
     }
@@ -32,7 +33,6 @@ impl Device {
         reader: &mut SplitStream<Framed<S, LinesCodec>>,
     ) -> i32 {
         while let Some(Ok(cmd)) = reader.next().await {
-            println!("api_set line: {}", cmd);
             if cmd.is_empty() {
                 return 0; // Done
             }
@@ -89,7 +89,6 @@ impl Device {
     ) -> i32 {
         let mut config = PeerConfig::new(pub_key);
         while let Some(Ok(cmd)) = reader.next().await {
-            println!("api_set_peer line: {}", cmd);
             if cmd.is_empty() {
                 self.update_peer(config).await;
                 return 0; // Done
