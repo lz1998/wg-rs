@@ -1,4 +1,4 @@
-use boringtun::noise::TunnResult;
+use crate::noise::TunnResult;
 use ip_network::IpNetwork;
 use ip_network_table::IpNetworkTable;
 use std::net::{IpAddr, SocketAddr};
@@ -56,7 +56,7 @@ impl PeerConfig {
 
 pub struct Peer {
     /// The associated tunnel struct
-    pub(crate) tunnel: boringtun::noise::Tunn,
+    pub(crate) tunnel: crate::noise::Tunn,
     /// The index the tunnel uses
     pub index: u32,
     pub addr: Option<SocketAddr>,
@@ -64,7 +64,7 @@ pub struct Peer {
     pub preshared_key: Option<[u8; 32]>,
 }
 impl Peer {
-    pub fn new(config: &PeerConfig, tunnel: boringtun::noise::Tunn, index: u32) -> Self {
+    pub fn new(config: &PeerConfig, tunnel: crate::noise::Tunn, index: u32) -> Self {
         let mut allowed_ips = IpNetworkTable::new();
         for AllowedIP { addr, cidr } in config.allowed_ips.iter() {
             allowed_ips.insert(
