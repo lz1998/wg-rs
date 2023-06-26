@@ -1,4 +1,4 @@
-use boringtun::noise::{
+use crate::noise::{
     errors::WireGuardError, handshake::parse_handshake_anon, rate_limiter::RateLimiter, Packet,
     TunnResult,
 };
@@ -426,7 +426,7 @@ impl Device {
             .expect("Private key must be set first")
             .0
             .clone();
-        let tunn = boringtun::noise::Tunn::new(
+        let tunn = crate::noise::Tunn::new(
             device_private,
             config.pub_key,
             config.preshared_key,
