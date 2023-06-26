@@ -1,17 +1,22 @@
 # wg-rs
 
 tokio wireguard/boringtun
+## Usage
 
+### Build and Run
 ```bash
-sudo apt install -y wireguard
-
+cargo build --release
+sudo ./target/release/device
+```
+### Generate key pair for each endpoint
+```bash
 # Generate key pair in ./privatekey and ./publickey
 umask 077
-wg genkey > privatekey
+wg genkey > privatekey # sudo apt install -y wireguard
 wg pubkey < privatekey > publickey
 ```
 
-## Endpoint A
+### Endpoint A
 myconfig.conf
 ```conf
 [Interface]
@@ -28,7 +33,7 @@ AllowedIPs = 10.0.0.1/32
 sudo wg setconf utun99 myconfig.conf && sudo ip addr add 10.0.0.2/24 dev utun99 && sudo ip link set utun99 up
 ```
 
-## Endpoint B
+### Endpoint B
 myconfig.conf
 ```conf
 [Interface]
