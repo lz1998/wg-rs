@@ -5,13 +5,13 @@ use wg_rs::tun::{codec::PacketCodec, stream::TunStream};
 #[tokio::main]
 async fn main() {
     let tun_stream = TunStream::new("utun99").unwrap();
-    tun_stream.mtu().unwrap();
+    let mtu = tun_stream.mtu().unwrap();
 
     let server_addr = std::env::var("SERVER_ADDR").unwrap();
     let tcp_stream = tokio::net::TcpStream::connect(server_addr).await.unwrap();
 
-    let (tun_out, tun_in) = Framed::new(tun_stream, PacketCodec).split();
-    let (tcp_out, tcp_in) = Framed::new(tcp_stream, PacketCodec).split();
+    let (tun_out, tun_in) = Framed::new(tun_stream, PacketCodec { mtu }).split();
+    let (tcp_out, tcp_in) = Framed::new(tcp_stream, PacketCodec { mtu }).split();
 
     tokio::select! {
         end = tcp_in.forward(tun_out) => {

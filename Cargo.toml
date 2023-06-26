@@ -32,8 +32,8 @@ base64 = "0.21"
 rand_core = { version = "0.6.3", features = [
     "getrandom",
 ] }
-# boringtun = { git = "https://github.com/lz1998/boringtun.git", branch = "master" }
-boringtun = { path = "../boringtun/boringtun" }
+boringtun = { git = "https://github.com/lz1998/boringtun.git", branch = "master" }
+# boringtun = { path = "../boringtun/boringtun" }
 dashmap = "5.2"
 tracing = "0.1"
 socket2 = { version = "0.5", features = [

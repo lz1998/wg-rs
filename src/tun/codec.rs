@@ -3,7 +3,9 @@ use tokio_util::codec::{Decoder, Encoder};
 
 use crate::error::{WgError, WgResult};
 
-pub struct PacketCodec;
+pub struct PacketCodec {
+    pub mtu: usize,
+}
 
 impl Encoder<Bytes> for PacketCodec {
     type Error = WgError;
@@ -31,6 +33,8 @@ impl Decoder for PacketCodec {
         if src.len() < len {
             return Ok(None);
         }
-        Ok(Some(src.copy_to_bytes(len)))
+        let data = src.copy_to_bytes(len);
+        src.reserve(self.mtu.saturating_sub(src.len()));
+        Ok(Some(data))
     }
 }
