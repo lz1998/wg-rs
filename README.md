@@ -49,3 +49,13 @@ AllowedIPs = 10.0.0.2/32
 ```bash
 sudo wg setconf utun99 myconfig.conf && sudo ip addr add 10.0.0.1/24 dev utun99 && sudo ip link set utun99 up
 ```
+
+## Speed test
+```bash
+dd if=/dev/zero of=a bs=$(echo "300*1024*1024" | bc) count=1 &> /dev/null
+scp ./a 10.0.0.1:~/a
+```
+
+- raw 254.0MB/s
+- boringtun 407.0KB/s
+- wg-rs 47.1MB/s
